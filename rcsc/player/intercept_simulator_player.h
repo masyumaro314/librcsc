@@ -181,6 +181,10 @@ private:
                             const int total_step,
                             const int n_turn ) const;
 
+    bool canReachByOmniDash( const PlayerData & data,
+                             const Vector2D & ball_pos,
+                             const int total_step ) const;
+
     /*!
       \brief predict player's reachable cycle to the ball final point
       \param player const reference to the player object

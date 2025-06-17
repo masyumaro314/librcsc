@@ -281,6 +281,16 @@ InterceptSimulatorPlayer::simulate( const WorldModel & wm,
             continue;
         }
 
+        if ( canReachByOmniDash( data, ball_pos, total_step ) )
+        {
+#ifdef DEBUG
+            dlog.addText( Logger::INTERCEPT,
+                          "--->cycle=%d  Sucess! [omni] ball(%.2f %.2f)",
+                          total_step, ball_pos.x, ball_pos.y );
+#endif
+            return total_step;
+        }
+
         if ( canReachAfterTurnDash( data,
                                     ball_pos,
                                     total_step ) )
@@ -474,6 +484,35 @@ InterceptSimulatorPlayer::canReachAfterDash( const PlayerData & data,
 #endif
 
     return false;
+}
+
+/*-------------------------------------------------------------------*/
+bool
+InterceptSimulatorPlayer::canReachByOmniDash( const PlayerData & data,
+                                              const Vector2D & ball_pos,
+                                              const int total_step ) const
+{
+    if ( data.player_.bodyCount() > data.player_.posCount() )
+    {
+        return false;
+    }
+
+    const Vector2D inertial_pos = data.ptype_.inertiaPoint( data.pos_, data.vel_, total_step );
+    const AngleDeg ball_angle = ( ball_pos - inertial_pos ).th();
+    const AngleDeg ball_dir = ball_angle - data.player_.body();
+    const double dash_dir_rate = ServerParam::i().dashDirRate( ball_dir.abs() );
+
+    const double move_dist = inertial_pos.dist( ball_pos ) - data.control_area_;
+    const int move_step = data.ptype_.cyclesToReachDistance( move_dist / dash_dir_rate );
+
+    const int result_step = move_step - data.bonus_step_ - data.penalty_step_;
+#ifdef DEBUG2
+    dlog.addText( Logger::INTERCEPT,
+                  "______(omni) unum=%d ball_step=%d result_step=%d move_step=%d bonus=%d penalyt=%d",
+                  data.player_.unum(), total_step, result_step,
+                  move_step, data.bonus_step_, data.penalty_step_ );
+#endif
+    return result_step <= total_step;
 }
 
 /*-------------------------------------------------------------------*/
